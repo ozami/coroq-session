@@ -9,11 +9,11 @@ class Session implements \ArrayAccess {
    * @param string $namespace
    */
   public function __construct($namespace) {
-    if (is_string($namespace)) {
-      throw new \LogicException("Namespace must be string");
+    if (!is_string($namespace)) {
+      throw new \InvalidArgumentException("Namespace must be string");
     }
     if ((string)(int)$namespace === $namespace) {
-      throw new \LogicException("String looks like decimal integer cannot be used as a namespace");
+      throw new \DomainException("String looks like decimal integer cannot be used as a namespace");
     }
     @session_start();
     $this->ns = $namespace;
