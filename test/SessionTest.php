@@ -1,11 +1,10 @@
 <?php
 use Coroq\Session;
 
+/**
+ * @runTestsInSeparateProcesses
+ */
 class SessionTest extends PHPUnit_Framework_TestCase {
-  protected function setUp() {
-    @session_destroy();
-  }
-
   public function testConstruction() {
     new Session("test");
     $this->assertEquals(["test" => []], $_SESSION);
