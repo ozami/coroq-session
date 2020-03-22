@@ -17,23 +17,20 @@ class Session implements \ArrayAccess {
     }
     @session_start();
     $this->ns = $namespace;
-    if (!isset($_SESSION[$this->ns]) || !is_array($_SESSION[$this->ns])) {
-      $_SESSION[$this->ns] = [];
-    }
   }
 
   /**
    * @return array
    */
-  public function getData() {
-    return $_SESSION[$this->ns];
+  public function get() {
+    return @$_SESSION[$this->ns];
   }
 
   /**
-   * @param array $data
+   * @param array|null $data
    * @return Session
    */
-  public function setData(array $data) {
+  public function set($data) {
     $_SESSION[$this->ns] = $data;
     return $this;
   }
@@ -42,25 +39,7 @@ class Session implements \ArrayAccess {
    * @return Session
    */
   public function clear() {
-    return $this->setData([]);
-  }
-
-  /**
-   * @param mixed $name
-   * @return mixed
-   */
-  public function get($name) {
-    return $_SESSION[$this->ns][$name];
-  }
-
-  /**
-   * @param mixed $name
-   * @param mixed $value
-   * @return Session
-   */
-  public function set($name, $value) {
-    $_SESSION[$this->ns][$name] = $value;
-    return $this;
+    unset($_SESSION[$this->ns]);
   }
 
   /**
@@ -76,7 +55,7 @@ class Session implements \ArrayAccess {
    * @return &mixed
    */
   public function &offsetGet($offset) {
-    return $_SESSION[$this->ns][$offset];
+    return @$_SESSION[$this->ns][$offset];
   }
 
   /**

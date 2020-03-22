@@ -7,18 +7,24 @@ use Coroq\Session;
 class SessionTest extends PHPUnit_Framework_TestCase {
   public function testConstruction() {
     new Session("test");
-    $this->assertEquals(["test" => []], $_SESSION);
+    $this->assertEquals([], $_SESSION);
   }
 
   public function testMultipleInstances() {
-    new Session("test1");
-    new Session("test2");
-    $this->assertEquals(["test1" => [], "test2" => []], $_SESSION);
+    $session1 = new Session("test1");
+    $session2 = new Session("test2");
+    $session1["value"] = 1;
+    $session2["value"] = 2;
+    $this->assertEquals([
+      "test1" => ["value" => 1],
+      "test2" => ["value" => 2],
+    ], $_SESSION);
   }
 
   public function testConstructionWithEmptyNamespace() {
-    new Session("");
-    $this->assertEquals(["" => []], $_SESSION);
+    $session = new Session("");
+    $session["value"] = 1;
+    $this->assertEquals(["" => ["value" => 1]], $_SESSION);
   }
 
   /**
@@ -57,14 +63,11 @@ class SessionTest extends PHPUnit_Framework_TestCase {
   }
 
   public function testConstructionWithNumericalStringNamespace() {
-    new Session("+1");
-    new Session("0.1");
-    new Session("01");
-    new Session("0x1");
-    new Session("0b1");
-    $this->assertEquals(
-      array_fill_keys(["+1", "0.1", "01", "0x1", "0b1"], []),
-      $_SESSION
-    );
+    foreach (["+1", "0.1", "01", "0x1", "0b1"] as $namespace) {
+      $_SESSION = [];
+      $session = new Session($namespace);
+      $session->set($namespace);
+      $this->assertEquals([$namespace => $namespace], $_SESSION);
+    }
   }
 }
