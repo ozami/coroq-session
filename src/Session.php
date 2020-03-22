@@ -15,7 +15,6 @@ class Session implements \ArrayAccess {
     if ((string)(int)$namespace === $namespace) {
       throw new \DomainException("String looks like decimal integer cannot be used as a namespace");
     }
-    @session_start();
     $this->ns = $namespace;
   }
 

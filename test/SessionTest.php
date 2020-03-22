@@ -5,6 +5,10 @@ use Coroq\Session;
  * @runTestsInSeparateProcesses
  */
 class SessionTest extends PHPUnit_Framework_TestCase {
+  public function setUp() {
+    $_SESSION = [];
+  }
+
   public function testConstruction() {
     new Session("test");
     $this->assertEquals([], $_SESSION);
