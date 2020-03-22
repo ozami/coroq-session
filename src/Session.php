@@ -51,9 +51,9 @@ class Session implements \ArrayAccess {
 
   /**
    * @param mixed $offset
-   * @return &mixed
+   * @return mixed
    */
-  public function &offsetGet($offset) {
+  public function offsetGet($offset) {
     return @$_SESSION[$this->ns][$offset];
   }
 

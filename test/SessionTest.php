@@ -74,4 +74,12 @@ class SessionTest extends PHPUnit_Framework_TestCase {
       $this->assertEquals([$namespace => $namespace], $_SESSION);
     }
   }
+
+  /**
+   * @expectedException PHPUnit_Framework_Error_Notice
+   */
+  public function testIndirectModificationArisesNotice() {
+    $session = new Session("test");
+    $session["array"][] = 1;
+  }
 }
