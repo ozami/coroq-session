@@ -35,7 +35,7 @@ class Session implements \ArrayAccess {
   }
 
   /**
-   * @return Session
+   * @return null
    */
   public function clear() {
     unset($_SESSION[$this->ns]);
