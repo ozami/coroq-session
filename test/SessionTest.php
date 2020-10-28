@@ -17,8 +17,8 @@ class SessionTest extends PHPUnit_Framework_TestCase {
   public function testMultipleInstances() {
     $session1 = new Session("test1");
     $session2 = new Session("test2");
-    $session1["value"] = 1;
-    $session2["value"] = 2;
+    $session1->value = 1;
+    $session2->value = 2;
     $this->assertEquals([
       "test1" => ["value" => 1],
       "test2" => ["value" => 2],
@@ -27,7 +27,7 @@ class SessionTest extends PHPUnit_Framework_TestCase {
 
   public function testConstructionWithEmptyNamespace() {
     $session = new Session("");
-    $session["value"] = 1;
+    $session->value = 1;
     $this->assertEquals(["" => ["value" => 1]], $_SESSION);
   }
 
@@ -70,8 +70,8 @@ class SessionTest extends PHPUnit_Framework_TestCase {
     foreach (["+1", "0.1", "01", "0x1", "0b1"] as $namespace) {
       $_SESSION = [];
       $session = new Session($namespace);
-      $session->set($namespace);
-      $this->assertEquals([$namespace => $namespace], $_SESSION);
+      $session->$namespace = $namespace;
+      $this->assertEquals([$namespace => [$namespace => $namespace]], $_SESSION);
     }
   }
 
@@ -80,6 +80,6 @@ class SessionTest extends PHPUnit_Framework_TestCase {
    */
   public function testIndirectModificationArisesNotice() {
     $session = new Session("test");
-    $session["array"][] = 1;
+    $session->array[] = 1;
   }
 }

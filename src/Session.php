@@ -1,9 +1,9 @@
 <?php
 namespace Coroq;
 
-class Session implements \ArrayAccess {
+class Session {
   /** @var string */
-  protected $ns;
+  protected $namespace;
 
   /**
    * @param string $namespace
@@ -15,65 +15,52 @@ class Session implements \ArrayAccess {
     if ((string)(int)$namespace === $namespace) {
       throw new \DomainException("String looks like decimal integer cannot be used as a namespace");
     }
-    $this->ns = $namespace;
+    $this->namespace = $namespace;
   }
 
   /**
-   * @return array
+   * @return mixed
    */
-  public function get() {
-    return @$_SESSION[$this->ns];
+  public function __get($name) {
+    return @$_SESSION[$this->namespace][$name];
   }
 
   /**
-   * @param array|null $data
-   * @return Session
+   * @param string $name
+   * @param mixed $value
+   * @return void
    */
-  public function set($data) {
-    $_SESSION[$this->ns] = $data;
-    return $this;
+  public function __set($name, $value) {
+    $_SESSION[$this->namespace][$name] = $value;
+  }
+
+  /**
+   * @param string $name
+   * @return bool
+   */
+  public function __isset($name) {
+    return isset($_SESSION[$this->namespace][$name]);
+  }
+
+  /**
+   * @param string $name
+   * @return void
+   */
+  public function __unset($name) {
+    unset($_SESSION[$this->namespace][$name]);
   }
 
   /**
    * @return null
    */
   public function clear() {
-    unset($_SESSION[$this->ns]);
+    unset($_SESSION[$this->namespace]);
   }
 
   /**
-   * @param mixed $offset
-   * @return bool
+   * @return array|null
    */
-  public function offsetExists($offset) {
-    return isset($_SESSION[$this->ns][$offset]);
-  }
-
-  /**
-   * @param mixed $offset
-   * @return mixed
-   */
-  public function offsetGet($offset) {
-    return @$_SESSION[$this->ns][$offset];
-  }
-
-  /**
-   * @param mixed $offset
-   * @param mixed $value
-   */
-  public function offsetSet($offset, $value) {
-    if (is_null($offset)) {
-      $_SESSION[$this->ns][] = $value;
-    }
-    else {
-      $_SESSION[$this->ns][$offset] = $value;
-    }
-  }
-
-  /**
-   * @param mixed $offset
-   */
-  public function offsetUnset($offset) {
-    unset($_SESSION[$this->ns][$offset]);
+  public function toArray() {
+    return @$_SESSION[$this->namespace];
   }
 }
