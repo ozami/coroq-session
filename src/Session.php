@@ -21,46 +21,22 @@ class Session {
   /**
    * @return mixed
    */
-  public function __get($name) {
-    return @$_SESSION[$this->namespace][$name];
+  public function get() {
+    return @$_SESSION[$this->namespace];
   }
 
   /**
-   * @param string $name
-   * @param mixed $value
+  * @param mixed $value
    * @return void
    */
-  public function __set($name, $value) {
-    $_SESSION[$this->namespace][$name] = $value;
+  public function set($value) {
+    $_SESSION[$this->namespace] = $value;
   }
 
   /**
-   * @param string $name
-   * @return bool
-   */
-  public function __isset($name) {
-    return isset($_SESSION[$this->namespace][$name]);
-  }
-
-  /**
-   * @param string $name
    * @return void
-   */
-  public function __unset($name) {
-    unset($_SESSION[$this->namespace][$name]);
-  }
-
-  /**
-   * @return null
    */
   public function clear() {
     unset($_SESSION[$this->namespace]);
-  }
-
-  /**
-   * @return array|null
-   */
-  public function toArray() {
-    return @$_SESSION[$this->namespace];
   }
 }
