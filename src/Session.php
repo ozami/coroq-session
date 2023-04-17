@@ -1,5 +1,5 @@
 <?php
-namespace Coroq;
+namespace Coroq\Session;
 
 class Session {
   /** @var string */

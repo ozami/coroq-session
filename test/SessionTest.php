@@ -1,11 +1,12 @@
 <?php
-use Coroq\Session;
+use Coroq\Session\Session;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @runTestsInSeparateProcesses
  */
-class SessionTest extends PHPUnit_Framework_TestCase {
-  public function setUp() {
+class SessionTest extends TestCase {
+  public function setUp():void {
     $_SESSION = [];
   }
 
@@ -31,38 +32,28 @@ class SessionTest extends PHPUnit_Framework_TestCase {
     $this->assertEquals(["" => 1], $_SESSION);
   }
 
-  /**
-   * @expectedException InvalidArgumentException
-   */
   public function testConstructionWithNullNamespaceWillFail() {
+    $this->expectException(InvalidArgumentException::class);
     new Session(null);
   }
 
-  /**
-   * @expectedException InvalidArgumentException
-   */
   public function testConstructionWithBoolNamespaceWillFail() {
+    $this->expectException(InvalidArgumentException::class);
     new Session(false);
   }
 
-  /**
-   * @expectedException InvalidArgumentException
-   */
   public function testConstructionWithFloadNamespaceWillFail() {
+    $this->expectException(InvalidArgumentException::class);
     new Session(3.1415);
   }
 
-  /**
-   * @expectedException DomainException
-   */
   public function testConstructionWithIntegerLikeStringNamespaceWillFail() {
+    $this->expectException(DomainException::class);
     new Session("1000");
   }
 
-  /**
-   * @expectedException DomainException
-   */
   public function testConstructionWithNegativeIntegerLikeStringNamespaceWillFail() {
+    $this->expectException(DomainException::class);
     new Session("-1000");
   }
 
