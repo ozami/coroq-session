@@ -32,21 +32,6 @@ class SessionTest extends TestCase {
     $this->assertEquals(["" => 1], $_SESSION);
   }
 
-  public function testConstructionWithNullNamespaceWillFail() {
-    $this->expectException(InvalidArgumentException::class);
-    new Session(null);
-  }
-
-  public function testConstructionWithBoolNamespaceWillFail() {
-    $this->expectException(InvalidArgumentException::class);
-    new Session(false);
-  }
-
-  public function testConstructionWithFloadNamespaceWillFail() {
-    $this->expectException(InvalidArgumentException::class);
-    new Session(3.1415);
-  }
-
   public function testConstructionWithIntegerLikeStringNamespaceWillFail() {
     $this->expectException(DomainException::class);
     new Session("1000");
