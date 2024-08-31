@@ -50,4 +50,23 @@ class SessionTest extends TestCase {
       $this->assertEquals([$namespace => $namespace], $_SESSION);
     }
   }
+
+  public function testGetReturnsValue() {
+    session_start();
+    $_SESSION['test'] = 'a';
+    $session = new Session('test');
+    $this->assertSame('a', $session->get());
+  }
+
+  public function testGetReturnsNullIfTheValueWasNotSet() {
+    $session = new Session('test');
+    $this->assertNull($session->get('default'));
+  }
+
+  public function testGetReturnsNullIfTheValueWasNull() {
+    session_start();
+    $_SESSION['test'] = null;
+    $session = new Session('test');
+    $this->assertNull($session->get());
+  }
 }

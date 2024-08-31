@@ -24,7 +24,7 @@ class Session {
    */
   public function get() {
     $this->start();
-    return @$_SESSION[$this->namespace];
+    return $_SESSION[$this->namespace] ?? null;
   }
 
   /**
