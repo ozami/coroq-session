@@ -35,6 +35,18 @@ class Session {
     $_SESSION[$this->namespace] = $value;
   }
 
+  public function merge(array $value): array {
+    $this->start();
+    $_SESSION[$this->namespace] = array_merge((array)$_SESSION[$this->namespace], $value);
+    return $_SESSION[$this->namespace];
+  }
+
+  public function mergeDefault(array $value): array {
+    $this->start();
+    $_SESSION[$this->namespace] = (array)$_SESSION[$this->namespace] + $value;
+    return $_SESSION[$this->namespace];
+  }
+
   public function clear(): void {
     $this->start();
     unset($_SESSION[$this->namespace]);

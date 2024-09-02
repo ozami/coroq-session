@@ -69,4 +69,28 @@ class SessionTest extends TestCase {
     $session = new Session('test');
     $this->assertNull($session->get());
   }
+
+  public function testMergeForArray() {
+    $session = new Session('test');
+    $session->set(['a' => 1, 'b' => 2, 'c']);
+    $this->assertSame(['a' => 1, 'b' => 'B', 'c', 'd'], $session->merge(['b' => 'B', 'd']));
+  }
+
+  public function testMergeForScalarValue() {
+    $session = new Session('test');
+    $session->set('string');
+    $this->assertSame(['string', 'a' => 1, 'b'], $session->merge(['a' => 1, 'b']));
+  }
+
+  public function testMergeDefaultForArray() {
+    $session = new Session('test');
+    $session->set(['a' => 1, 'b' => 2, 'c']);
+    $this->assertSame(['a' => 1, 'b' => 2, 'c', 'e'], $session->mergeDefault(['b' => 'B', 'd', 'e']));
+  }
+
+  public function testMergeDefaultForScalarValue() {
+    $session = new Session('test');
+    $session->set(99);
+    $this->assertSame([99, 'b' => 'B', 'e'], $session->mergeDefault(['b' => 'B', 'd', 'e']));
+  }
 }
