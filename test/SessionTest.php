@@ -70,6 +70,74 @@ class SessionTest extends TestCase {
     $this->assertNull($session->get());
   }
 
+  public function testGetInReturnsCorrectValueForValidPath() {
+    $session = new Session('test');
+    $session->set([
+      'a' => [
+        'b' => 2,
+        'c' => 3,
+        'd' => [
+          'e' => 4,
+        ],
+      ],
+      'f' => 5,
+    ]);
+    $this->assertSame(3, $session->getIn('a/c'));
+    $this->assertSame(5, $session->getIn('f'));
+    $this->assertSame(4, $session->getIn('a/d/e'));
+    $this->assertSame(['e' => 4], $session->getIn('a/d'));
+  }
+
+  public function testGetInThrowsDomainExceptionForNonArrayValue() {
+    $session = new Session('test');
+    $session->set([
+      'a' => [
+        'b' => 2,
+      ],
+    ]);
+    $this->expectException(DomainException::class);
+    $this->expectExceptionMessage('Trying to access array offset on integer while traversing path "a/b/c"');
+    $session->getIn('a/b/c');
+  }
+
+  public function testGetInThrowsOutOfRangeExceptionForUndefinedSegment() {
+    $session = new Session('test');
+    $session->set([
+      'a' => [
+      ],
+    ]);
+    $this->expectException(OutOfRangeException::class);
+    $this->expectExceptionMessage('Undefined array segment "b" in path "a/b"');
+    $session->getIn('a/b');
+  }
+
+  public function testSetInCreatesNewNestedArrayIfPathDoesNotExist() {
+    $session = new Session('test');
+    $session->setIn('a/b/c', 'ok');
+    $this->assertSame('ok', $_SESSION['test']['a']['b']['c']);
+  }
+
+  public function testSetInOverwritesExistingValue() {
+    $session = new Session('test');
+    $session->set([
+      'a' => [
+        'b' => 'ng',
+      ],
+    ]);
+    $session->setIn('a/b', 'ok');
+    $this->assertSame('ok', $_SESSION['test']['a']['b']);
+  }
+
+  public function testSetInThrowsDomainExceptionForNonArraySegment() {
+    $session = new Session('test');
+    $session->set([
+      'a' => 'A',
+    ]);
+    $this->expectException(DomainException::class);
+    $this->expectExceptionMessage('Cannot set array offset on type "string" while traversing the path "a/b" at segment "b".');
+    $session->setIn('a/b', 'ok');
+  }
+
   public function testMergeForArray() {
     $session = new Session('test');
     $session->set(['a' => 1, 'b' => 2, 'c']);
