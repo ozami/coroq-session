@@ -108,6 +108,25 @@ PHP serializes (encodes as string) session data when storing it. This is general
 - Objects with dependencies (services, repositories)
 - Objects with complex internal state
 
+## Handling type mismatch
+
+When property types change between deployments, stored session data may no longer match the expected types. In this case, all properties are reset to defaults. Override `onTypeError()` to customize:
+
+```php
+class UserSession extends Session {
+    public int $version = 2;
+    public string $name = '';
+
+    protected function onTypeError(array $storedValues, \TypeError $error): void {
+        // Log for debugging
+        error_log('Session type mismatch: ' . $error->getMessage());
+
+        // Reset to defaults
+        parent::onTypeError($storedValues, $error);
+    }
+}
+```
+
 ## Migration from v1.x
 
 v2.0 is a complete redesign using typed properties. The previous implementation is available as `ArraySession` for backward compatibility.

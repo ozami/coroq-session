@@ -34,9 +34,34 @@ class Session {
   private function loadFromSession(): void {
     $stored = $_SESSION[$this->sessionNamespace] ?? [];
 
+    try {
+      foreach ($this->getSessionPropertyNames() as $name) {
+        if (array_key_exists($name, $stored)) {
+          $this->$name = $stored[$name];
+        }
+      }
+    } catch (\TypeError $e) {
+      $this->onTypeError($stored, $e);
+    }
+  }
+
+  /**
+   * Called when session data cannot be loaded due to type mismatch.
+   * Override to log or handle differently.
+   *
+   * @param array<string, mixed> $storedValues The values that were in session
+   * @param \TypeError $error The error that occurred
+   */
+  protected function onTypeError(array $storedValues, \TypeError $error): void {
+    $this->resetToDefaults();
+  }
+
+  protected function resetToDefaults(): void {
+    $reflection = new ReflectionClass($this);
     foreach ($this->getSessionPropertyNames() as $name) {
-      if (array_key_exists($name, $stored)) {
-        $this->$name = $stored[$name];
+      $property = $reflection->getProperty($name);
+      if ($property->hasDefaultValue()) {
+        $this->$name = $property->getDefaultValue();
       }
     }
   }

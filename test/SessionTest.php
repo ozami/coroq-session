@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 use Coroq\Session\Session;
 use PHPUnit\Framework\TestCase;
 
@@ -15,6 +16,19 @@ class TestSessionWithNullable extends Session {
 class TestSessionWithStatic extends Session {
   public static string $staticProp = 'static';
   public string $instanceProp = 'instance';
+}
+
+class TestSessionWithTypeError extends Session {
+  public int $count = 0;
+  public string $status = 'pending';
+  public ?\TypeError $lastError = null;
+  public ?array $lastStoredValues = null;
+
+  protected function onTypeError(array $storedValues, \TypeError $error): void {
+    parent::onTypeError($storedValues, $error);  // Reset first
+    $this->lastStoredValues = $storedValues;     // Then capture
+    $this->lastError = $error;
+  }
 }
 
 /**
@@ -152,5 +166,37 @@ class SessionTest extends TestCase {
     unset($session);
 
     $this->assertSame('Empty', $_SESSION['']['name']);
+  }
+
+  public function testTypeMismatchResetsToDefaults(): void {
+    session_start();
+    $_SESSION['test'] = [
+      'count' => 'not an int',  // Type mismatch
+      'status' => 'active',
+    ];
+
+    $session = new TestSessionWithTypeError('test');
+
+    // All properties reset to defaults
+    $this->assertSame(0, $session->count);
+    $this->assertSame('pending', $session->status);
+
+    // Error info captured
+    $this->assertInstanceOf(\TypeError::class, $session->lastError);
+    $this->assertSame('not an int', $session->lastStoredValues['count']);
+  }
+
+  public function testTypeMismatchMidLoopResetsAll(): void {
+    session_start();
+    $_SESSION['test'] = [
+      'count' => 10,            // Valid
+      'status' => ['invalid'],  // Type mismatch (array instead of string)
+    ];
+
+    $session = new TestSessionWithTypeError('test');
+
+    // All properties reset, even the one that loaded successfully
+    $this->assertSame(0, $session->count);
+    $this->assertSame('pending', $session->status);
   }
 }
