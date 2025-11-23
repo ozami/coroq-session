@@ -2,163 +2,155 @@
 use Coroq\Session\Session;
 use PHPUnit\Framework\TestCase;
 
+class TestUserSession extends Session {
+  public string $name = '';
+  public int $age = 0;
+  public array $tags = [];
+}
+
+class TestSessionWithNullable extends Session {
+  public ?string $email = null;
+}
+
+class TestSessionWithStatic extends Session {
+  public static string $staticProp = 'static';
+  public string $instanceProp = 'instance';
+}
+
 /**
  * @runTestsInSeparateProcesses
  */
 class SessionTest extends TestCase {
-  public function setUp():void {
+  public function setUp(): void {
     $_SESSION = [];
   }
 
-  public function testConstruction() {
-    new Session("test");
-    $this->assertEquals([], $_SESSION);
-  }
-
-  public function testMultipleInstances() {
-    $session1 = new Session("test1");
-    $session2 = new Session("test2");
-    $session1->set(1);
-    $session2->set(2);
-    $this->assertEquals([
-      "test1" => 1,
-      "test2" => 2,
-    ], $_SESSION);
-  }
-
-  public function testConstructionWithEmptyNamespace() {
-    $session = new Session("");
-    $session->set(1);
-    $this->assertEquals(["" => 1], $_SESSION);
-  }
-
-  public function testConstructionWithIntegerLikeStringNamespaceWillFail() {
+  public function testConstructionWithIntegerLikeNamespaceThrows(): void {
     $this->expectException(DomainException::class);
-    new Session("1000");
+    new TestUserSession("123");
   }
 
-  public function testConstructionWithNegativeIntegerLikeStringNamespaceWillFail() {
+  public function testConstructionWithNegativeIntegerLikeNamespaceThrows(): void {
     $this->expectException(DomainException::class);
-    new Session("-1000");
+    new TestUserSession("-1");
   }
 
-  public function testConstructionWithNumericalStringNamespace() {
-    foreach (["+1", "0.1", "01", "0x1", "0b1"] as $namespace) {
+  public function testConstructionWithNonIntegerNumericNamespaceSucceeds(): void {
+    foreach (["+1", "0.1", "01", "0x1", "0b1", "1e5"] as $namespace) {
       $_SESSION = [];
-      $session = new Session($namespace);
-      $session->set($namespace);
-      $this->assertEquals([$namespace => $namespace], $_SESSION);
+      $session = new TestUserSession($namespace);
+      unset($session);
+      $this->assertArrayHasKey($namespace, $_SESSION);
     }
   }
 
-  public function testGetReturnsValue() {
+  public function testPropertiesHaveDefaultValuesOnConstruction(): void {
+    $session = new TestUserSession('test');
+    $this->assertSame('', $session->name);
+    $this->assertSame(0, $session->age);
+    $this->assertSame([], $session->tags);
+  }
+
+  public function testPropertiesLoadFromSession(): void {
     session_start();
-    $_SESSION['test'] = 'a';
-    $session = new Session('test');
-    $this->assertSame('a', $session->get());
+    $_SESSION['test'] = [
+      'name' => 'John',
+      'age' => 30,
+      'tags' => ['admin'],
+    ];
+
+    $session = new TestUserSession('test');
+    $this->assertSame('John', $session->name);
+    $this->assertSame(30, $session->age);
+    $this->assertSame(['admin'], $session->tags);
   }
 
-  public function testGetReturnsNullIfTheValueWasNotSet() {
-    $session = new Session('test');
-    $this->assertNull($session->get('default'));
+  public function testPropertiesSaveToSessionOnDestruct(): void {
+    $session = new TestUserSession('test');
+    $session->name = 'Jane';
+    $session->age = 25;
+    $session->tags = ['editor'];
+    unset($session);
+
+    $this->assertSame([
+      'name' => 'Jane',
+      'age' => 25,
+      'tags' => ['editor'],
+    ], $_SESSION['test']);
   }
 
-  public function testGetReturnsNullIfTheValueWasNull() {
+  public function testMultipleNamespacesAreIndependent(): void {
+    $session1 = new TestUserSession('user1');
+    $session2 = new TestUserSession('user2');
+
+    $session1->name = 'Alice';
+    $session2->name = 'Bob';
+
+    unset($session1, $session2);
+
+    $this->assertSame('Alice', $_SESSION['user1']['name']);
+    $this->assertSame('Bob', $_SESSION['user2']['name']);
+  }
+
+  public function testNestedArrayModificationWorks(): void {
+    $session = new TestUserSession('test');
+    $session->tags['nested'] = ['deep' => 'value'];
+    $session->tags['nested']['deep'] = 'modified';
+    unset($session);
+
+    $this->assertSame('modified', $_SESSION['test']['tags']['nested']['deep']);
+  }
+
+  public function testOnlyExistingPropertiesAreLoaded(): void {
     session_start();
-    $_SESSION['test'] = null;
-    $session = new Session('test');
-    $this->assertNull($session->get());
+    $_SESSION['test'] = [
+      'name' => 'John',
+      'unknownProperty' => 'ignored',
+    ];
+
+    $session = new TestUserSession('test');
+    $this->assertSame('John', $session->name);
+    $this->assertSame(0, $session->age); // Default, not from session
   }
 
-  public function testGetInReturnsCorrectValueForValidPath() {
-    $session = new Session('test');
-    $session->set([
-      'a' => [
-        'b' => 2,
-        'c' => 3,
-        'd' => [
-          'e' => 4,
-        ],
-      ],
-      'f' => 5,
-    ]);
-    $this->assertSame(3, $session->getIn('a/c'));
-    $this->assertSame(5, $session->getIn('f'));
-    $this->assertSame(4, $session->getIn('a/d/e'));
-    $this->assertSame(['e' => 4], $session->getIn('a/d'));
+  public function testNullablePropertyWorks(): void {
+    $session = new TestSessionWithNullable('test');
+    $this->assertNull($session->email);
+
+    $session->email = 'test@example.com';
+    unset($session);
+
+    $this->assertSame('test@example.com', $_SESSION['test']['email']);
   }
 
-  public function testGetInThrowsDomainExceptionForNonArrayValue() {
-    $session = new Session('test');
-    $session->set([
-      'a' => [
-        'b' => 2,
-      ],
-    ]);
-    $this->expectException(DomainException::class);
-    $this->expectExceptionMessage('Trying to access array offset on integer while traversing path "a/b/c"');
-    $session->getIn('a/b/c');
+  public function testStaticPropertiesAreIgnored(): void {
+    $session = new TestSessionWithStatic('test');
+    $session->instanceProp = 'modified';
+    unset($session);
+
+    $this->assertArrayHasKey('instanceProp', $_SESSION['test']);
+    $this->assertArrayNotHasKey('staticProp', $_SESSION['test']);
   }
 
-  public function testGetInThrowsOutOfRangeExceptionForUndefinedSegment() {
-    $session = new Session('test');
-    $session->set([
-      'a' => [
-      ],
-    ]);
-    $this->expectException(OutOfRangeException::class);
-    $this->expectExceptionMessage('Undefined array segment "b" in path "a/b"');
-    $session->getIn('a/b');
+  public function testPartialSessionDataLoadsCorrectly(): void {
+    session_start();
+    $_SESSION['test'] = [
+      'name' => 'Partial',
+      // 'age' missing
+      // 'tags' missing
+    ];
+
+    $session = new TestUserSession('test');
+    $this->assertSame('Partial', $session->name);
+    $this->assertSame(0, $session->age); // Default
+    $this->assertSame([], $session->tags); // Default
   }
 
-  public function testSetInCreatesNewNestedArrayIfPathDoesNotExist() {
-    $session = new Session('test');
-    $session->setIn('a/b/c', 'ok');
-    $this->assertSame('ok', $_SESSION['test']['a']['b']['c']);
-  }
+  public function testEmptyNamespaceWorks(): void {
+    $session = new TestUserSession('');
+    $session->name = 'Empty';
+    unset($session);
 
-  public function testSetInOverwritesExistingValue() {
-    $session = new Session('test');
-    $session->set([
-      'a' => [
-        'b' => 'ng',
-      ],
-    ]);
-    $session->setIn('a/b', 'ok');
-    $this->assertSame('ok', $_SESSION['test']['a']['b']);
-  }
-
-  public function testSetInThrowsDomainExceptionForNonArraySegment() {
-    $session = new Session('test');
-    $session->set([
-      'a' => 'A',
-    ]);
-    $this->expectException(DomainException::class);
-    $this->expectExceptionMessage('Cannot set array offset on type "string" while traversing the path "a/b" at segment "b".');
-    $session->setIn('a/b', 'ok');
-  }
-
-  public function testMergeForArray() {
-    $session = new Session('test');
-    $session->set(['a' => 1, 'b' => 2, 'c']);
-    $this->assertSame(['a' => 1, 'b' => 'B', 'c', 'd'], $session->merge(['b' => 'B', 'd']));
-  }
-
-  public function testMergeForScalarValue() {
-    $session = new Session('test');
-    $session->set('string');
-    $this->assertSame(['string', 'a' => 1, 'b'], $session->merge(['a' => 1, 'b']));
-  }
-
-  public function testMergeDefaultForArray() {
-    $session = new Session('test');
-    $session->set(['a' => 1, 'b' => 2, 'c']);
-    $this->assertSame(['a' => 1, 'b' => 2, 'c', 'e'], $session->mergeDefault(['b' => 'B', 'd', 'e']));
-  }
-
-  public function testMergeDefaultForScalarValue() {
-    $session = new Session('test');
-    $session->set(99);
-    $this->assertSame([99, 'b' => 'B', 'e'], $session->mergeDefault(['b' => 'B', 'd', 'e']));
+    $this->assertSame('Empty', $_SESSION['']['name']);
   }
 }
