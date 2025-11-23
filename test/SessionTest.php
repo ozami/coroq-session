@@ -25,8 +25,7 @@ class TestSessionWithTypeError extends Session {
   public ?array $lastStoredValues = null;
 
   protected function onTypeError(array $storedValues, \TypeError $error): void {
-    parent::onTypeError($storedValues, $error);  // Reset first
-    $this->lastStoredValues = $storedValues;     // Then capture
+    $this->lastStoredValues = $storedValues;
     $this->lastError = $error;
   }
 }

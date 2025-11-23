@@ -33,15 +33,22 @@ class Session {
 
   private function loadFromSession(): void {
     $stored = $_SESSION[$this->sessionNamespace] ?? [];
+    $test = clone $this;
+    $propertyNames = $this->getSessionPropertyNames();
 
     try {
-      foreach ($this->getSessionPropertyNames() as $name) {
+      foreach ($propertyNames as $name) {
         if (array_key_exists($name, $stored)) {
-          $this->$name = $stored[$name];
+          $test->$name = $stored[$name];
         }
       }
     } catch (\TypeError $e) {
       $this->onTypeError($stored, $e);
+      return;
+    }
+
+    foreach ($propertyNames as $name) {
+      $this->$name = $test->$name;
     }
   }
 
@@ -53,17 +60,7 @@ class Session {
    * @param \TypeError $error The error that occurred
    */
   protected function onTypeError(array $storedValues, \TypeError $error): void {
-    $this->resetToDefaults();
-  }
-
-  protected function resetToDefaults(): void {
-    $reflection = new ReflectionClass($this);
-    foreach ($this->getSessionPropertyNames() as $name) {
-      $property = $reflection->getProperty($name);
-      if ($property->hasDefaultValue()) {
-        $this->$name = $property->getDefaultValue();
-      }
-    }
+    // Default: do nothing. Properties retain their default values.
   }
 
   public function __destruct() {
