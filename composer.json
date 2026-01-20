@@ -1,5 +1,7 @@
 {
     "name": "coroq/session",
+    "description": "Session-backed typed objects for PHP 8.0+",
+    "keywords": ["session", "type-safe"],
     "type": "library",
     "license": "MIT",
     "authors": [
