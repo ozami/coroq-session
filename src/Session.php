@@ -67,7 +67,7 @@ class Session implements \ArrayAccess {
    * @param mixed $offset
    * @return bool
    */
-  public function offsetExists($offset) {
+  public function offsetExists($offset): bool {
     return isset($_SESSION[$this->ns][$offset]);
   }
 
@@ -75,7 +75,7 @@ class Session implements \ArrayAccess {
    * @param mixed $offset
    * @return &mixed
    */
-  public function &offsetGet($offset) {
+  public function &offsetGet($offset): mixed {
     return $_SESSION[$this->ns][$offset];
   }
 
@@ -83,7 +83,7 @@ class Session implements \ArrayAccess {
    * @param mixed $offset
    * @param mixed $value
    */
-  public function offsetSet($offset, $value) {
+  public function offsetSet($offset, $value): void {
     if (is_null($offset)) {
       $_SESSION[$this->ns][] = $value;
     }
@@ -95,7 +95,7 @@ class Session implements \ArrayAccess {
   /**
    * @param mixed $offset
    */
-  public function offsetUnset($offset) {
+  public function offsetUnset($offset): void {
     unset($_SESSION[$this->ns][$offset]);
   }
 }
